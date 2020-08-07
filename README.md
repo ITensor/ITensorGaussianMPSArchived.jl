@@ -1,6 +1,6 @@
 # GaussianMatrixProductStates
 
-[![DOI]](https://doi.org/10.1103/PhysRevB.92.075132)
+[![DOI](http://img.shields.io/badge/PRB-10.1103/PhysRevB.92.075132-B31B1B.svg)](https://doi.org/10.1103/PhysRevB.92.075132)
 
 A package for creating the matrix product state of a free fermion (Gaussian) state.
 
