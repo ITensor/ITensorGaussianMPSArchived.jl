@@ -2,6 +2,17 @@
 
 A package for creating the matrix product state of a free fermion (Gaussian) state.
 
+## Installation
+
+The package is currently unregistered. To install it, start `julia` and run the command:
+```julia
+julia>]
+
+pkg> add https://github.com/mtfishman/GaussianMatrixProductStates.jl
+```
+
+## Examples
+
 This can help create starting states for DMRG. For example:
 ```julia
 using ITensors
