@@ -6,9 +6,11 @@ A package for creating the matrix product state of a free fermion (Gaussian) sta
 
 ## Installation
 
-The package is currently unregistered. To install it, start `julia` and run the command:
+The package is currently unregistered and relies on a branch of ITensors. To install it, start `julia` and run the command:
 ```julia
 julia>]
+
+pkg> add ITensors#product
 
 pkg> add https://github.com/mtfishman/GaussianMatrixProductStates.jl
 ```
