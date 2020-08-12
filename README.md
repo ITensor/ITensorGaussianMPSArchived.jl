@@ -1,14 +1,14 @@
 # GaussianMatrixProductStates
 
-|**Citation**                                                                    |
-|:-------------------------------------------------------------------------------:|
-[![DOI](http://img.shields.io/badge/PRB-10.1103/PhysRevB.92.075132-B31B1B.svg)](https://doi.org/10.1103/PhysRevB.92.075132)
+|**Citation**                                                                     |**Open-access preprint**                               |
+|:-------------------------------------------------------------------------------:|:-----------------------------------------------------:|
+| [![DOI](http://img.shields.io/badge/PRB-10.1103/PhysRevB.92.075132-B31B1B.svg)](https://doi.org/10.1103/PhysRevB.92.075132) | [![arXiv](https://img.shields.io/badge/arXiv-1504.07701-b31b1b.svg)](https://arxiv.org/abs/1504.07701) |
 
 A package for creating the matrix product state of a free fermion (Gaussian) state.
 
 ## Installation
 
-The package is currently unregistered and relies on a branch of ITensors. To install it, start `julia` and run the command:
+The package is currently unregistered and relies on a development branch of the [ITensors](https://github.com/ITensor/ITensors.jl) Julia package. To install it, start `julia` and run the command:
 ```julia
 julia>]
 
