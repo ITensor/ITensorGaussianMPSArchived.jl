@@ -8,11 +8,9 @@ A package for creating the matrix product state of a free fermion (Gaussian) sta
 
 ## Installation
 
-The package is currently unregistered and relies on a development branch of the [ITensors](https://github.com/ITensor/ITensors.jl) Julia package. To install it, start `julia` and run the command:
+The package is currently unregistered. To install it, first install Julia, start the Julia REPL by typing `julia` at your command line, and run the command:
 ```julia
 julia>]
-
-pkg> add ITensors#product
 
 pkg> add https://github.com/mtfishman/GaussianMatrixProductStates.jl
 ```
@@ -34,7 +32,6 @@ Nf = N÷2
 t = 1.0
 
 # Free fermion hopping Hamiltonian
-#h = SymTridiagonal(zeros(N), fill(-t, N-1))
 h = Hermitian(diagm(1 => fill(-t, N-1), -1 => fill(-t, N-1)))
 _, u = eigen(h)
 

@@ -31,7 +31,7 @@ end
 
   # Diagonalize the correlation matrix as a
   # Gaussian MPS (GMPS)
-  n, gmps = slater_determinant_to_gmps(Φ, blocksize = 4)
+  n, gmps = slater_determinant_to_gmps(Φ, maxblocksize = 4)
 
   ns = round.(Int, n)
   @test sum(ns) == Nf

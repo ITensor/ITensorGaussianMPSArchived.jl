@@ -260,7 +260,7 @@ function correlation_matrix_to_mps(s::Vector{<:Index}, Λ::AbstractMatrix;
   @assert size(Λ, 1) == size(Λ, 2)
   ns, C = correlation_matrix_to_gmps(Λ; eigval_cutoff = eigval_cutoff, maxblocksize = maxblocksize)
   if all(hastags("Fermion"), s)
-    U = [ITensor(s, g) for g in C.rotations]
+    U = [ITensor(s, g) for g in reverse(C.rotations)]
     ψ = MPS(s, n -> round(Int, ns[n]) + 1, U; kwargs...)
   elseif all(hastags("Electron"), s)
     isodd(length(s)) && error("For Electron type, must have even number of sites of alternating up and down spins.")
@@ -270,7 +270,7 @@ function correlation_matrix_to_mps(s::Vector{<:Index}, Λ::AbstractMatrix;
     else
       sf = siteinds("Fermion", 2*N; conserve_qns = true)
     end
-    U = [ITensor(sf, g) for g in C.rotations]
+    U = [ITensor(sf, g) for g in reverse(C.rotations)]
     ψf = MPS(sf, n -> round(Int, ns[n]) + 1, U; kwargs...)
     ψ = MPS(N)
     for n in 1:N
@@ -307,7 +307,7 @@ function correlation_matrix_to_mps(s::Vector{<:Index}, Λ_up::AbstractMatrix, Λ
   # TODO: combine ns_up and ns_dn in ns
   if all(hastags("Fermion"), s)
     @assert length(s) = N
-    U = [ITensor(s, g) for g in C.rotations]
+    U = [ITensor(s, g) for g in reverse(C.rotations)]
     ψ = MPS(s, n -> round(Int, ns[n]) + 1, U; kwargs...)
   elseif all(hastags("Electron"), s)
     @assert length(s) == N_up
@@ -318,7 +318,7 @@ function correlation_matrix_to_mps(s::Vector{<:Index}, Λ_up::AbstractMatrix, Λ
     else
       sf = siteinds("Fermion", N; conserve_qns = true, conserve_sz = false)
     end
-    U = [ITensor(sf, g) for g in C.rotations]
+    U = [ITensor(sf, g) for g in reverse(C.rotations)]
     ψf = MPS(sf, n -> round(Int, ns[n]) + 1, U; kwargs...)
     ψ = MPS(N_up)
     for n in 1:N_up
