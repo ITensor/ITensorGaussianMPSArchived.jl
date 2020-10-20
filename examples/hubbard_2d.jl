@@ -51,6 +51,10 @@ h = hopping_hamiltonian(ampo_up, ampo_dn)
 # Get the Slater determinant
 Φ = slater_determinant_matrix(h, Nf)
 
+println()
+println("Exact free fermion energy: ", tr(Φ'h*Φ))
+println()
+
 # Create an MPS from the slater determinant.
 # For now it only works without Sz conservation, this will be supported soon.
 s = siteinds("Electron", N; conserve_qns = true, conserve_sz = false)
