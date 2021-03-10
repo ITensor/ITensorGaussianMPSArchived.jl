@@ -290,6 +290,29 @@ function slater_determinant_to_mps(s::Vector{<:Index}, Φ::AbstractMatrix; kwarg
   return correlation_matrix_to_mps(s, conj(Φ) * transpose(Φ); kwargs...)
 end
 
+function slater_determinant_to_mps(s::Vector{<:Index}, Φ_up::AbstractMatrix, Φ_dn::AbstractMatrix; kwargs...)
+  return correlation_matrix_to_mps(s, conj(Φ_up) * transpose(Φ_up), conj(Φ_dn) * transpose(Φ_dn); kwargs...)
+end
+
+function mapindex(f::Function, C::Circuit)
+  return Circuit(mapindex.(f, C.rotations))
+end
+
+function mapindex(f::Function, g::Givens)
+  return Givens(f(g.i1), f(g.i2), g.c, g.s)
+end
+
+function replace_index_itensor(i1::Index, i2::Index)
+  # Should be diagonal within each block
+  # TODO: make a special constructor ITensor(1.0, ::Index, ::Index) (this currently doesn't work
+  # for QN ITensors)
+  # TODO: make a special constructor diagBlockITensor?
+  t = ITensor(dag(i1), i2)
+  # TODO: use nnz
+  ITensors.data(t) .= 1
+  return t
+end
+
 function correlation_matrix_to_mps(s::Vector{<:Index}, Λ_up::AbstractMatrix, Λ_dn::AbstractMatrix;
                                    eigval_cutoff::Float64 = 1e-8,
                                    maxblocksize::Int = min(size(Λ_up, 1), size(Λ_dn, 1)),
@@ -303,18 +326,26 @@ function correlation_matrix_to_mps(s::Vector{<:Index}, Λ_up::AbstractMatrix, Λ
   N = N_up + N_dn
   ns_up, C_up = correlation_matrix_to_gmps(Λ_up; eigval_cutoff = eigval_cutoff, maxblocksize = maxblocksize)
   ns_dn, C_dn = correlation_matrix_to_gmps(Λ_dn; eigval_cutoff = eigval_cutoff, maxblocksize = maxblocksize)
-  # TODO: shift C_up and C_dn and combine into C
-  # TODO: combine ns_up and ns_dn in ns
+  # map the up spins to the odd sites and the even spins to the even sites
+  C_up = mapindex(n -> 2n-1, C_up)
+  C_dn = mapindex(n -> 2n, C_dn)
+  C = Circuit(collect(Iterators.flatten(zip(C_up.rotations, C_dn.rotations))))
+  ns = collect(Iterators.flatten(zip(ns_up, ns_dn)))
   if all(hastags("Fermion"), s)
-    @assert length(s) = N
+    @assert length(s) == N
     U = [ITensor(s, g) for g in reverse(C.rotations)]
     ψ = MPS(s, n -> round(Int, ns[n]) + 1, U; kwargs...)
   elseif all(hastags("Electron"), s)
     @assert length(s) == N_up
+    @assert length(s) == N_dn
     if isspinful(s)
-      sf_up = siteinds("Fermion", N_up; conserve_qns = true, conserve_sz = "Up")
-      sf_dn = siteinds("Fermion", N_dn; conserve_qns = true, conserve_sz = "Dn")
-      sf = [isodd(n) ? sf_up[(n+1)÷2] : sf_dn[n÷2] for n in 1:N]
+      space_up = [QN(("Nf", 0, -1), ("Sz", 0)) => 1,
+                  QN(("Nf", 1, -1), ("Sz", 1)) => 1]
+      space_dn = [QN(("Nf", 0, -1), ("Sz", 0)) => 1,
+                  QN(("Nf", 1, -1), ("Sz", -1)) => 1]
+      sf_up = [Index(space_up, "Fermion,Site,n=$(2n-1)") for n in 1:N_up]
+      sf_dn = [Index(space_dn, "Fermion,Site,n=$(2n)") for n in 1:N_dn]
+      sf = collect(Iterators.flatten(zip(sf_up, sf_dn)))
     else
       sf = siteinds("Fermion", N; conserve_qns = true, conserve_sz = false)
     end
@@ -326,7 +357,7 @@ function correlation_matrix_to_mps(s::Vector{<:Index}, Λ_up::AbstractMatrix, Λ
       C = combiner(sf[i], sf[j])
       c = combinedind(C)
       ψ[n] = ψf[i] * ψf[j] * C
-      ψ[n] *= δ(dag(c), s[n])
+      ψ[n] *= replace_index_itensor(c, s[n])
     end
   else
     error("All sites must be Fermion or Electron type.")
