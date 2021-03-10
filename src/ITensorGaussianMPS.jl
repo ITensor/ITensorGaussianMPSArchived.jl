@@ -1,4 +1,4 @@
-module GaussianMatrixProductStates
+module ITensorGaussianMPS
 
 using ITensors
 using LinearAlgebra

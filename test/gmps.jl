@@ -1,4 +1,4 @@
-using GaussianMatrixProductStates
+using ITensorGaussianMPS
 using ITensors
 using LinearAlgebra
 using Test
@@ -6,7 +6,7 @@ using Test
 @testset "Basic" begin
   # Test Givens rotations
   v = randn(6)
-  g, r = GaussianMatrixProductStates.givens_rotations(v)
+  g, r = ITensorGaussianMPS.givens_rotations(v)
   @test g * v ≈ r * [n == 1 ? 1 : 0 for n in 1:length(v)]
 end
 

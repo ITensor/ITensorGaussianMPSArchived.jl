@@ -1,4 +1,4 @@
-using GaussianMatrixProductStates
+using ITensorGaussianMPS
 using ITensors
 using LinearAlgebra
 using Test

@@ -1,4 +1,4 @@
-# GaussianMatrixProductStates
+# ITensorGaussianMPS
 
 |**Citation**                                                                     |**Open-access preprint**                               |
 |:-------------------------------------------------------------------------------:|:-----------------------------------------------------:|
@@ -12,7 +12,7 @@ The package is currently unregistered. To install it, first install Julia, start
 ```julia
 julia>]
 
-pkg> add https://github.com/mtfishman/GaussianMatrixProductStates.jl
+pkg> add https://github.com/ITensor/ITensorGaussianMPS.jl
 ```
 
 ## Examples
@@ -20,7 +20,7 @@ pkg> add https://github.com/mtfishman/GaussianMatrixProductStates.jl
 This can help create starting states for DMRG. For example:
 ```julia
 using ITensors
-using GaussianMatrixProductStates
+using ITensorGaussianMPS
 
 # Half filling
 N = 20

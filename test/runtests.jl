@@ -1,7 +1,7 @@
-using GaussianMatrixProductStates
+using ITensorGaussianMPS
 using LinearAlgebra
 using Test
 
-@testset "GaussianMatrixProductStates.jl" begin
+@testset "ITensorGaussianMPS.jl" begin
   include("gmps.jl")
 end

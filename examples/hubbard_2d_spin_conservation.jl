@@ -1,4 +1,4 @@
-using GaussianMatrixProductStates
+using ITensorGaussianMPS
 using LinearAlgebra
 using ITensors
 
