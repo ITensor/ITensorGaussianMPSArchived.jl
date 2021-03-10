@@ -174,7 +174,7 @@ function correlation_matrix_to_gmps(Λ0::AbstractMatrix{ElT}; eigval_cutoff::Flo
   Λ = Hermitian(Λ0)
   N = size(Λ, 1)
   V = Circuit{ElT}([])
-  ns = Vector{ElT}(undef, N)
+  ns = Vector{real(ElT)}(undef, N)
   err_tot = 0.0
   for i in 1:N
     blocksize = 0
@@ -185,7 +185,7 @@ function correlation_matrix_to_gmps(Λ0::AbstractMatrix{ElT}; eigval_cutoff::Flo
     for blocksize in 1:maxblocksize
       j = min(i + blocksize, N)
       ΛB = @view Λ[i:j, i:j]
-      nB, uB = eigen(ΛB)
+      nB, uB = eigen(Hermitian(ΛB))
       p = sortperm(nB; by = entropy)
       n = nB[p[1]]
       err = min(n, 1-n)
@@ -215,7 +215,7 @@ end
 function ITensors.ITensor(u::Givens, s1::Index, s2::Index)
   U = [1    0   0 0
        0  u.c u.s 0
-       0 -u.s u.c 0
+       0 -conj(u.s) u.c 0
        0    0   0 1]
   return itensor(U, s2', s1', dag(s2), dag(s1))
 end
