@@ -1,83 +1,102 @@
-include("GaussianMatrixProductStates.jl")
+using GaussianMatrixProductStates
+using ITensors
+using LinearAlgebra
+using Test
 
-# Electrons
+@testset "Electron" begin
+  # Half filling
+  N = 40
+  Nf_up = N÷2
+  Nf_dn = N÷2
+  Nf = Nf_up + Nf_dn
 
-N = 10
-Nf = N
+  # Maximum MPS link dimension
+  _maxlinkdim = 200
 
-s = siteinds("Electron", N; conserve_qns = true, conserve_sz = false)
+  # DMRG cutoff
+  _cutoff = 1e-8
 
-# Starting state
-ψ0 = productMPS(s, n -> n ≤ Nf ? (isodd(n) ? "↑" : "↓") : "0")
+  # Hopping
+  t = 1.0
 
-# Hopping
-t = 1.0
+  # Electron-electron on-site interaction
+  U = 1.0
 
-ampo = AutoMPO()
-for b=1:N-1
-  ampo .+= -t,"Cdagup",b,"Cup",b+1
-  ampo .+= -t,"Cdagup",b+1,"Cup",b
-  ampo .+= -t,"Cdagdn",b,"Cdn",b+1
-  ampo .+= -t,"Cdagdn",b+1,"Cdn",b
+  # Make the free fermion Hamiltonian for the up spins
+  ampo_up = AutoMPO()
+  for n in 1:N-1
+    ampo_up .+= -t, "Cdagup", n, "Cup", n+1
+    ampo_up .+= -t, "Cdagup", n+1, "Cup", n
+  end
+
+  # Make the free fermion Hamiltonian for the down spins
+  ampo_dn = AutoMPO()
+  for n in 1:N-1
+    ampo_dn .+= -t, "Cdagdn", n, "Cdn", n+1
+    ampo_dn .+= -t, "Cdagdn", n+1, "Cdn", n
+  end
+
+  # Hopping Hamiltonians for the up and down spins
+  h_up = hopping_hamiltonian(ampo_up)
+  h_dn = hopping_hamiltonian(ampo_dn)
+
+  # Get the Slater determinant
+  Φ_up = slater_determinant_matrix(h_up, Nf_up)
+  Φ_dn = slater_determinant_matrix(h_dn, Nf_dn)
+
+  # Create an MPS from the slater determinants.
+  s = siteinds("Electron", N; conserve_qns = true)
+  ψ0 = slater_determinant_to_mps(s, Φ_up, Φ_dn; eigval_cutoff = 1e-4,
+                                                cutoff = _cutoff,
+                                                maxdim = _maxlinkdim)
+  @test maxlinkdim(ψ0) ≤ _maxlinkdim
+
+  # The total non-interacting part of the Hamiltonian
+  ampo_noninteracting = AutoMPO()
+  for n in 1:N-1
+    ampo_noninteracting .+= -t, "Cdagup", n, "Cup", n+1
+    ampo_noninteracting .+= -t, "Cdagdn", n, "Cdn", n+1
+    ampo_noninteracting .+= -t, "Cdagup", n+1, "Cup", n
+    ampo_noninteracting .+= -t, "Cdagdn", n+1, "Cdn", n
+  end
+
+  H_noninteracting = MPO(ampo_noninteracting, s)
+  @test tr(Φ_up' * h_up * Φ_up) + tr(Φ_dn' * h_dn * Φ_dn) ≈ inner(ψ0, H_noninteracting, ψ0) rtol = 1e-3
+
+  # The total interacting Hamiltonian
+  ampo_interacting = AutoMPO()
+  for n in 1:N-1
+    ampo_interacting .+= -t, "Cdagup", n, "Cup", n+1
+    ampo_interacting .+= -t, "Cdagdn", n, "Cdn", n+1
+    ampo_interacting .+= -t, "Cdagup", n+1, "Cup", n
+    ampo_interacting .+= -t, "Cdagdn", n+1, "Cdn", n
+  end
+  for n in 1:N
+    ampo_interacting .+= U, "Nupdn", n
+  end
+  H = MPO(ampo_interacting, s)
+
+  # Random starting state
+  ψr = randomMPS(s, n -> n ≤ Nf ? (isodd(n) ? "↑" : "↓") : "0")
+
+  @test flux(ψr) == QN(("Nf", Nf, -1), ("Sz", 0))
+  @test flux(ψ0) == QN(("Nf", Nf, -1), ("Sz", 0))
+
+  @test inner(ψ0, H, ψ0) < inner(ψr, H, ψr)
+
+  sweeps = Sweeps(3)
+  maxdim!(sweeps, 10, 20, _maxlinkdim)
+  cutoff!(sweeps, _cutoff)
+  noise!(sweeps, 1e-5, 1e-6, 1e-7, 0.0)
+  er, _ = dmrg(H, ψr, sweeps; outputlevel = 0)
+
+  sweeps = Sweeps(3)
+  maxdim!(sweeps, _maxlinkdim)
+  cutoff!(sweeps, _cutoff)
+  noise!(sweeps, 1e-5, 1e-6, 1e-7, 0.0)
+  e0, _ = dmrg(H, ψ0, sweeps; outputlevel = 0)
+
+  @test e0 > inner(ψ0, H_noninteracting, ψ0)
+  @test e0 < er
 end
-H = MPO(ampo, s)
 
-sweeps = Sweeps(10)
-maxdim!(sweeps,10,20,40,60)
-cutoff!(sweeps,1E-12)
-energy, ψ = dmrg(H, ψ0, sweeps)
-
-h = Hermitian(diagm(2 => fill(-t, 2*N-2), -2 => fill(-t, 2*N-2)))
-
-e, u = eigen(h)
-d = Diagonal(e)
-@assert h * u ≈ u * d
-
-@show sum(e[1:Nf]), energy
-
-# Get the Slater determinant
-Φ = u[:, 1:Nf]
-d_Nf = d[1:Nf, 1:Nf]
-
-@assert h * Φ ≈ Φ * d_Nf
-
-# Create an mps
-
-sf = siteinds("Fermion", 2*N; conserve_qns = true)
-ψ̃f = slater_determinant_to_mps(sf, Φ; blocksize = 6)
-ψ̃ = MPS(N)
-for n in 1:N
-  i, j = 2*n-1, 2*n
-  C = combiner(sf[i], sf[j])
-  c = combinedind(C)
-  ψ̃[n] = ψ̃f[i] * ψ̃f[j] * C
-  ψ̃[n] *= δ(dag(c), s[n])
-end
-@show maxlinkdim(ψ), maxlinkdim(ψ̃)
-@show inner(ψ, ψ̃)
-@show inner(ψ̃, H, ψ̃), inner(ψ, H, ψ)
-
-U = 1.0
-ampo = AutoMPO()
-for b=1:N-1
-  ampo .+= -t,"Cdagup",b,"Cup",b+1
-  ampo .+= -t,"Cdagup",b+1,"Cup",b
-  ampo .+= -t,"Cdagdn",b,"Cdn",b+1
-  ampo .+= -t,"Cdagdn",b+1,"Cdn",b
-end
-for i in 1:N
-  ampo .+= U, "Nupdn", i
-end
-H = MPO(ampo, s)
-
-println("\n Start from product state")
-sweeps = Sweeps(5)
-maxdim!(sweeps,10,20,100)
-cutoff!(sweeps,1E-12)
-dmrg(H, ψ0, sweeps)
-
-println("\n Start from free fermion state")
-sweeps = Sweeps(5)
-maxdim!(sweeps,100)
-cutoff!(sweeps,1E-12)
-dmrg(H, ψ̃, sweeps)
