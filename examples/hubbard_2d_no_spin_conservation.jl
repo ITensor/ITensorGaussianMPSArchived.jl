@@ -56,7 +56,7 @@ println("Exact free fermion energy: ", tr(Φ'h*Φ))
 println()
 
 # Create an MPS from the slater determinant.
-# For now it only works without Sz conservation, this will be supported soon.
+# In this example we are turning of spin conservation.
 s = siteinds("Electron", N; conserve_qns = true, conserve_sz = false)
 println("Making free fermion starting MPS")
 @time ψ0 = slater_determinant_to_mps(s, Φ; eigval_cutoff = 1e-4,
