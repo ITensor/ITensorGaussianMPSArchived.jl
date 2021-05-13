@@ -28,16 +28,16 @@ U = 1.0
 
 # Make the free fermion Hamiltonian for the up spins
 ampo_up = AutoMPO()
-for n in 1:N-1
-  ampo_up .+= -t, "Cdagup", n, "Cup", n+1
-  ampo_up .+= -t, "Cdagup", n+1, "Cup", n
+for n in 1:(N - 1)
+  ampo_up .+= -t, "Cdagup", n, "Cup", n + 1
+  ampo_up .+= -t, "Cdagup", n + 1, "Cup", n
 end
 
 # Make the free fermion Hamiltonian for the down spins
 ampo_dn = AutoMPO()
-for n in 1:N-1
-  ampo_dn .+= -t, "Cdagdn", n, "Cdn", n+1
-  ampo_dn .+= -t, "Cdagdn", n+1, "Cdn", n
+for n in 1:(N - 1)
+  ampo_dn .+= -t, "Cdagdn", n, "Cdn", n + 1
+  ampo_dn .+= -t, "Cdagdn", n + 1, "Cdn", n
 end
 
 # Hopping Hamiltonian with 2*N spinless fermions,
@@ -50,11 +50,11 @@ h = hopping_hamiltonian(ampo_up, ampo_dn)
 # Create an MPS from the slater determinant.
 # In this example, we will turn off spin conservation (so this would
 # work with a Hamiltonian that mixed the up and down spin sectors)
-s = siteinds("Electron", N; conserve_qns = true, conserve_sz = false)
+s = siteinds("Electron", N; conserve_qns=true, conserve_sz=false)
 println("Making free fermion starting MPS")
-@time ψ0 = slater_determinant_to_mps(s, Φ; eigval_cutoff = 1e-4,
-                                           cutoff = _cutoff,
-                                           maxdim = _maxlinkdim)
+@time ψ0 = slater_determinant_to_mps(
+  s, Φ; eigval_cutoff=1e-4, cutoff=_cutoff, maxdim=_maxlinkdim
+)
 @show maxlinkdim(ψ0)
 
 @show U
@@ -77,14 +77,14 @@ println("Free fermion starting state energy")
 
 println("\nStart from product state")
 sweeps = Sweeps(10)
-maxdim!(sweeps,10,20,_maxlinkdim)
-cutoff!(sweeps,_cutoff)
+maxdim!(sweeps, 10, 20, _maxlinkdim)
+cutoff!(sweeps, _cutoff)
 @time dmrg(H, ψr, sweeps)
 
 println("\nStart from free fermion state")
 sweeps = Sweeps(5)
-maxdim!(sweeps,_maxlinkdim)
-cutoff!(sweeps,_cutoff)
+maxdim!(sweeps, _maxlinkdim)
+cutoff!(sweeps, _cutoff)
 @time dmrg(H, ψ0, sweeps)
 
 nothing

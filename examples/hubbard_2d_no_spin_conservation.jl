@@ -28,7 +28,7 @@ U = 4.0
 
 @show t, U
 
-lattice = square_lattice(Nx, Ny; yperiodic = true)
+lattice = square_lattice(Nx, Ny; yperiodic=true)
 
 # Make the free fermion Hamiltonian for the up spins
 ampo_up = AutoMPO()
@@ -52,16 +52,16 @@ h = hopping_hamiltonian(ampo_up, ampo_dn)
 Φ = slater_determinant_matrix(h, Nf)
 
 println()
-println("Exact free fermion energy: ", tr(Φ'h*Φ))
+println("Exact free fermion energy: ", tr(Φ'h * Φ))
 println()
 
 # Create an MPS from the slater determinant.
 # In this example we are turning of spin conservation.
-s = siteinds("Electron", N; conserve_qns = true, conserve_sz = false)
+s = siteinds("Electron", N; conserve_qns=true, conserve_sz=false)
 println("Making free fermion starting MPS")
-@time ψ0 = slater_determinant_to_mps(s, Φ; eigval_cutoff = 1e-4,
-                                           cutoff = _cutoff,
-                                           maxdim  = _maxlinkdim)
+@time ψ0 = slater_determinant_to_mps(
+  s, Φ; eigval_cutoff=1e-4, cutoff=_cutoff, maxdim=_maxlinkdim
+)
 @show maxlinkdim(ψ0)
 
 ampo = ampo_up + ampo_dn

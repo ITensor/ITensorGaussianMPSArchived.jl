@@ -6,8 +6,8 @@ using ITensors
 
 # Half filling
 N = 100
-Nf_up = N÷2
-Nf_dn = N÷2
+Nf_up = N ÷ 2
+Nf_dn = N ÷ 2
 Nf = Nf_up + Nf_dn
 
 @show N, Nf
@@ -30,16 +30,16 @@ U = 1.0
 
 # Make the free fermion Hamiltonian for the up spins
 ampo_up = AutoMPO()
-for n in 1:N-1
-  ampo_up .+= -t, "Cdagup", n, "Cup", n+1
-  ampo_up .+= -t, "Cdagup", n+1, "Cup", n
+for n in 1:(N - 1)
+  ampo_up .+= -t, "Cdagup", n, "Cup", n + 1
+  ampo_up .+= -t, "Cdagup", n + 1, "Cup", n
 end
 
 # Make the free fermion Hamiltonian for the down spins
 ampo_dn = AutoMPO()
-for n in 1:N-1
-  ampo_dn .+= -t, "Cdagdn", n, "Cdn", n+1
-  ampo_dn .+= -t, "Cdagdn", n+1, "Cdn", n
+for n in 1:(N - 1)
+  ampo_dn .+= -t, "Cdagdn", n, "Cdn", n + 1
+  ampo_dn .+= -t, "Cdagdn", n + 1, "Cdn", n
 end
 
 # Hopping Hamiltonians for the up and down spins
@@ -51,20 +51,20 @@ h_dn = hopping_hamiltonian(ampo_dn)
 Φ_dn = slater_determinant_matrix(h_dn, Nf_dn)
 
 # Create an MPS from the slater determinants.
-s = siteinds("Electron", N; conserve_qns = true)
+s = siteinds("Electron", N; conserve_qns=true)
 println("Making free fermion starting MPS")
-@time ψ0 = slater_determinant_to_mps(s, Φ_up, Φ_dn; eigval_cutoff = 1e-4,
-                                                    cutoff = _cutoff,
-                                                    maxdim = _maxlinkdim)
+@time ψ0 = slater_determinant_to_mps(
+  s, Φ_up, Φ_dn; eigval_cutoff=1e-4, cutoff=_cutoff, maxdim=_maxlinkdim
+)
 @show maxlinkdim(ψ0)
 
 # The total non-interacting part of the Hamiltonian
 ampo_noninteracting = AutoMPO()
-for n in 1:N-1
-  ampo_noninteracting .+= -t, "Cdagup", n, "Cup", n+1
-  ampo_noninteracting .+= -t, "Cdagdn", n, "Cdn", n+1
-  ampo_noninteracting .+= -t, "Cdagup", n+1, "Cup", n
-  ampo_noninteracting .+= -t, "Cdagdn", n+1, "Cdn", n
+for n in 1:(N - 1)
+  ampo_noninteracting .+= -t, "Cdagup", n, "Cup", n + 1
+  ampo_noninteracting .+= -t, "Cdagdn", n, "Cdn", n + 1
+  ampo_noninteracting .+= -t, "Cdagup", n + 1, "Cup", n
+  ampo_noninteracting .+= -t, "Cdagdn", n + 1, "Cdn", n
 end
 
 H_noninteracting = MPO(ampo_noninteracting, s)
@@ -73,11 +73,11 @@ H_noninteracting = MPO(ampo_noninteracting, s)
 
 # The total interacting Hamiltonian
 ampo_interacting = AutoMPO()
-for n in 1:N-1
-  ampo_interacting .+= -t, "Cdagup", n, "Cup", n+1
-  ampo_interacting .+= -t, "Cdagdn", n, "Cdn", n+1
-  ampo_interacting .+= -t, "Cdagup", n+1, "Cup", n
-  ampo_interacting .+= -t, "Cdagdn", n+1, "Cdn", n
+for n in 1:(N - 1)
+  ampo_interacting .+= -t, "Cdagup", n, "Cup", n + 1
+  ampo_interacting .+= -t, "Cdagdn", n, "Cdn", n + 1
+  ampo_interacting .+= -t, "Cdagup", n + 1, "Cup", n
+  ampo_interacting .+= -t, "Cdagdn", n + 1, "Cdn", n
 end
 for n in 1:N
   ampo_interacting .+= U, "Nupdn", n
@@ -98,16 +98,16 @@ println("Free fermion starting state energy")
 
 println("\nStart from product state")
 sweeps = Sweeps(10)
-maxdim!(sweeps,10,20,_maxlinkdim)
-cutoff!(sweeps,_cutoff)
+maxdim!(sweeps, 10, 20, _maxlinkdim)
+cutoff!(sweeps, _cutoff)
 er, ψ̃r = @time dmrg(H, ψr, sweeps)
 @show er
 @show flux(ψ̃r)
 
 println("\nStart from free fermion state")
 sweeps = Sweeps(5)
-maxdim!(sweeps,_maxlinkdim)
-cutoff!(sweeps,_cutoff)
+maxdim!(sweeps, _maxlinkdim)
+cutoff!(sweeps, _cutoff)
 e0, ψ̃0 = @time dmrg(H, ψ0, sweeps)
 @show e0
 @show flux(ψ̃0)

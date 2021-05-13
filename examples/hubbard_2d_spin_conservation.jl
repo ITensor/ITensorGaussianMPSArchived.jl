@@ -8,8 +8,8 @@ using ITensors
 Nx, Ny = 6, 3
 N = Nx * Ny
 Nf = N
-Nf_up = N÷2
-Nf_dn = N-Nf_up
+Nf_up = N ÷ 2
+Nf_dn = N - Nf_up
 
 @show Nx, Ny
 @show N, Nf
@@ -30,7 +30,7 @@ U = 4.0
 
 @show t, U
 
-lattice = square_lattice(Nx, Ny; yperiodic = true)
+lattice = square_lattice(Nx, Ny; yperiodic=true)
 
 # Make the free fermion Hamiltonian for the up spins
 ampo_up = AutoMPO()
@@ -56,17 +56,16 @@ h_dn = hopping_hamiltonian(ampo_dn)
 Φ_dn = slater_determinant_matrix(h_dn, Nf_dn)
 
 println()
-println("Exact free fermion energy: ", tr(Φ_up'h_up*Φ_up) + tr(Φ_dn'h_dn*Φ_dn))
+println("Exact free fermion energy: ", tr(Φ_up'h_up * Φ_up) + tr(Φ_dn'h_dn * Φ_dn))
 println()
 
 # Create an MPS from the slater determinant.
 # For now it only works without Sz conservation, this will be supported soon.
-s = siteinds("Electron", N; conserve_qns = true)
+s = siteinds("Electron", N; conserve_qns=true)
 println("Making free fermion starting MPS")
-@time ψ0 = slater_determinant_to_mps(s, Φ_up, Φ_dn;
-                                     eigval_cutoff = 1e-4,
-                                     cutoff = _cutoff,
-                                     maxdim  = _maxlinkdim)
+@time ψ0 = slater_determinant_to_mps(
+  s, Φ_up, Φ_dn; eigval_cutoff=1e-4, cutoff=_cutoff, maxdim=_maxlinkdim
+)
 @show maxlinkdim(ψ0)
 
 ampo = AutoMPO()
