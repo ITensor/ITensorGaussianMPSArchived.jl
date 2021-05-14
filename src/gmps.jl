@@ -325,15 +325,27 @@ function mapindex(f::Function, g::Givens)
   return Givens(f(g.i1), f(g.i2), g.c, g.s)
 end
 
-function replace_index_itensor(i1::Index, i2::Index)
-  # Should be diagonal within each block
-  # TODO: make a special constructor ITensor(1.0, ::Index, ::Index) (this currently doesn't work
-  # for QN ITensors)
-  # TODO: make a special constructor diagBlockITensor?
-  t = ITensor(dag(i1), i2)
-  # TODO: use nnz
-  ITensors.data(t) .= 1
-  return t
+function identity_blocks!(T::Tensor)
+  for b in nzblocks(T)
+    T[b] = Matrix{Float64}(I, dims(T[b]))
+  end
+  return T
+end
+
+# Creates an ITensor with the specified flux where each nonzero block
+# is identity
+# TODO: make a special constructor for this.
+function identity_blocks_itensor(flux::QN, i1::Index, i2::Index)
+  A = ITensor(flux, i1, i2)
+  identity_blocks!(tensor(A))
+  return A
+end
+
+identity_blocks_itensor(i1::ITensors.QNIndex, i2::ITensors.QNIndex) = identity_blocks_itensor(QN(), i1, i2)
+
+function identity_blocks_itensor(i1::Index, i2::Index)
+  M = Matrix{Float64}(I, dim(i1), dim(i2))
+  return itensor(M, i1, i2)
 end
 
 function correlation_matrix_to_mps(
@@ -386,7 +398,7 @@ function correlation_matrix_to_mps(
       C = combiner(sf[i], sf[j])
       c = combinedind(C)
       ψ[n] = ψf[i] * ψf[j] * C
-      ψ[n] *= replace_index_itensor(c, s[n])
+      ψ[n] *= identity_blocks_itensor(dag(c), s[n])
     end
   else
     error("All sites must be Fermion or Electron type.")

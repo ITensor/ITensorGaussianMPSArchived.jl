@@ -1,6 +1,7 @@
 module ITensorGaussianMPS
 
 using ITensors
+using ITensors.NDTensors
 using LinearAlgebra
 
 import LinearAlgebra: Givens

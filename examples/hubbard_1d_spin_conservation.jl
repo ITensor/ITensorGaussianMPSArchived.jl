@@ -96,7 +96,7 @@ println("Free fermion starting state energy")
 @show flux(ψ0)
 @show inner(ψ0, H, ψ0)
 
-println("\nStart from product state")
+println("\nStart from random product state")
 sweeps = Sweeps(10)
 maxdim!(sweeps, 10, 20, _maxlinkdim)
 cutoff!(sweeps, _cutoff)
