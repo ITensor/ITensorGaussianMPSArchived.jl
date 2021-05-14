@@ -12,7 +12,7 @@ The package is currently unregistered. To install it, first install Julia, start
 ```julia
 julia>]
 
-pkg> add https://github.com/ITensor/ITensorGaussianMPS.jl
+pkg> add https://github.com/ITensor/ITensorGaussianMPS.jl#main
 ```
 
 ## Examples
