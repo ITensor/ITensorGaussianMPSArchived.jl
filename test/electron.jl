@@ -100,3 +100,33 @@ using Test
   @test e0 > inner(ψ0, H_noninteracting, ψ0)
   @test e0 < er
 end
+
+@testset "Regression test for bug away from half filling" begin
+  N = 3
+  t = 1.0
+  ampo_up = AutoMPO()
+  for n in 1:(N - 1)
+    ampo_up .+= -t, "Cdagup", n, "Cup", n + 1
+    ampo_up .+= -t, "Cdagup", n + 1, "Cup", n
+  end
+  ampo_dn = AutoMPO()
+  for n in 1:(N - 1)
+    ampo_dn .+= -t, "Cdagdn", n, "Cdn", n + 1
+    ampo_dn .+= -t, "Cdagdn", n + 1, "Cdn", n
+  end
+  h_up = hopping_hamiltonian(ampo_up)
+  h_dn = hopping_hamiltonian(ampo_dn)
+  s = siteinds("Electron", N; conserve_qns=true)
+  H = MPO(ampo_up + ampo_dn, s)
+  Nf_up, Nf_dn = 1, 0
+  Φ_up = slater_determinant_matrix(h_up, Nf_up)
+  Φ_dn = slater_determinant_matrix(h_dn, Nf_dn)
+  ψ = slater_determinant_to_mps(s, Φ_up, Φ_dn; eigval_cutoff=0.0, cutoff=0.0)
+  @test inner(ψ, H, ψ) ≈ tr(Φ_up'h_up * Φ_up) + tr(Φ_dn'h_dn * Φ_dn)
+  @test maxlinkdim(ψ) == 2
+  @test flux(ψ) == QN(("Nf", 1, -1), ("Sz", 1))
+  @test expect(ψ, "Nup") ≈ diag(Φ_up * Φ_up')
+  @test expect(ψ, "Ndn") ≈ diag(Φ_dn * Φ_dn')
+  @test sum(expect(ψ, "Nup")) ≈ Nf_up
+  @test sum(expect(ψ, "Ndn")) ≈ Nf_dn
+end

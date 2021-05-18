@@ -32,6 +32,11 @@ end
 
 Base.adjoint(R::Circuit) = Adjoint(R)
 
+function Base.show(io::IO, ::MIME"text/plain", C::Circuit{T}) where {T}
+  print(io, "Circuit{$T}:\n")
+  return show(io, "text/plain", C.rotations)
+end
+
 function Base.copy(aR::Adjoint{<:Any,Circuit{T}}) where {T}
   return Circuit{T}(reverse!([r' for r in aR.parent.rotations]))
 end
@@ -341,11 +346,30 @@ function identity_blocks_itensor(flux::QN, i1::Index, i2::Index)
   return A
 end
 
-identity_blocks_itensor(i1::ITensors.QNIndex, i2::ITensors.QNIndex) = identity_blocks_itensor(QN(), i1, i2)
+function identity_blocks_itensor(i1::ITensors.QNIndex, i2::ITensors.QNIndex)
+  return identity_blocks_itensor(QN(), i1, i2)
+end
 
 function identity_blocks_itensor(i1::Index, i2::Index)
   M = Matrix{Float64}(I, dim(i1), dim(i2))
   return itensor(M, i1, i2)
+end
+
+convert_union_nothing(v::Vector{T}) where {T} = convert(Vector{Union{T,Nothing}}, v)
+
+function interleave(xs...)
+  nexts = convert_union_nothing(collect(Base.iterate.(xs)))
+  res = Union{eltype.(xs)...}[]
+  while any(!isnothing, nexts)
+    for ii in eachindex(nexts)
+      if !isnothing(nexts[ii])
+        (item, state) = nexts[ii]
+        push!(res, item)
+        nexts[ii] = iterate(xs[ii], state)
+      end
+    end
+  end
+  return res
 end
 
 function correlation_matrix_to_mps(
@@ -372,8 +396,8 @@ function correlation_matrix_to_mps(
   # map the up spins to the odd sites and the even spins to the even sites
   C_up = mapindex(n -> 2n - 1, C_up)
   C_dn = mapindex(n -> 2n, C_dn)
-  C = Circuit(collect(Iterators.flatten(zip(C_up.rotations, C_dn.rotations))))
-  ns = collect(Iterators.flatten(zip(ns_up, ns_dn)))
+  C = Circuit(interleave(C_up.rotations, C_dn.rotations))
+  ns = interleave(ns_up, ns_dn)
   if all(hastags("Fermion"), s)
     @assert length(s) == N
     U = [ITensor(s, g) for g in reverse(C.rotations)]
