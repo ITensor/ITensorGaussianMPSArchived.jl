@@ -3,6 +3,31 @@ using ITensors
 using LinearAlgebra
 using Test
 
+function expect_compat(psi::MPS, ops::AbstractString...; kwargs...)
+  if ITensors.version() >= v"0.2"
+    return expect(psi, ops...; kwargs...)
+  end
+  psi = copy(psi)
+  N = length(psi)
+  ElT = real(promote_itensor_eltype(psi))
+  Nops = length(ops)
+  s = siteinds(psi)
+  site_range::UnitRange{Int} = get(kwargs, :site_range, 1:N)
+  Ns = length(site_range)
+  start_site = first(site_range)
+  offset = start_site - 1
+  orthogonalize!(psi, start_site)
+  psi[start_site] ./= norm(psi[start_site])
+  ex = ntuple(n -> zeros(ElT, Ns), Nops)
+  for j in site_range
+    orthogonalize!(psi, j)
+    for n in 1:Nops
+      ex[n][j - offset] = real(scalar(psi[j] * op(ops[n], s[j]) * dag(prime(psi[j], s[j]))))
+    end
+  end
+  return Nops == 1 ? ex[1] : ex
+end
+
 @testset "Electron" begin
   # Half filling
   N = 40
@@ -125,8 +150,10 @@ end
   @test inner(ψ, H, ψ) ≈ tr(Φ_up'h_up * Φ_up) + tr(Φ_dn'h_dn * Φ_dn)
   @test maxlinkdim(ψ) == 2
   @test flux(ψ) == QN(("Nf", 1, -1), ("Sz", 1))
-  @test expect(ψ, "Nup") ≈ diag(Φ_up * Φ_up')
-  @test expect(ψ, "Ndn") ≈ diag(Φ_dn * Φ_dn')
-  @test sum(expect(ψ, "Nup")) ≈ Nf_up
-  @test sum(expect(ψ, "Ndn")) ≈ Nf_dn
+  ns_up = expect_compat(ψ, "Nup")
+  ns_dn = expect_compat(ψ, "Ndn")
+  @test ns_up ≈ diag(Φ_up * Φ_up')
+  @test ns_dn ≈ diag(Φ_dn * Φ_dn')
+  @test sum(ns_up) ≈ Nf_up
+  @test sum(ns_dn) ≈ Nf_dn
 end
