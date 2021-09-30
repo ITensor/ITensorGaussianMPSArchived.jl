@@ -103,7 +103,7 @@ function hopping_hamiltonian(ampo::AutoMPO)
     coefs[n] = coef
     ops = term.ops
     length(ops) != 2 && error("Must create hopping Hamiltonian from quadratic Hamiltonian")
-    sites[n] = ntuple(n -> ops[n].site, Val(2))
+    sites[n] = ntuple(n -> only(ops[n].site), Val(2))
     nsites = max(nsites, maximum(sites[n]))
   end
   ElT = all(isreal(coefs)) ? Float64 : ComplexF64
@@ -258,9 +258,10 @@ function isspinful(s::Vector{<:Index})
 end
 
 """
-    correlation_matrix_to_mps(Λ::AbstractMatrix{ElT}; eigval_cutoff::Float64 = 1e-8,
-                                                      maxblocksize::Int = size(Λ, 1),
-                                                      kwargs...)
+    correlation_matrix_to_mps(s::Vector{<:Index}, Λ::AbstractMatrix{ElT};
+                              eigval_cutoff::Float64 = 1e-8,
+                              maxblocksize::Int = size(Λ, 1),
+                              kwargs...)
 
 Return an approximation to the state represented by the correlation matrix as
 a matrix product state (MPS).
