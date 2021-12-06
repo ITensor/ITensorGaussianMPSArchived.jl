@@ -1,3 +1,8 @@
+> ⚠️ **INFO: This repository is deprecated**
+> 
+> The source code for the `ITensorGaussianMPS` package has been moved into the monorepo at [ITensors.jl](https://github.com/ITensor/ITensors.jl).
+> Please refer to that repository for the latest changes.
+
 # ITensorGaussianMPS
 
 |**Citation**                                                                     |**Open-access preprint**                               |
